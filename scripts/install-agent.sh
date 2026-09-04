@@ -8,7 +8,7 @@ install_base_packages
 ensure_docker
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y --no-install-recommends lm-sensors fancontrol python3 util-linux
+apt-get install -y --no-install-recommends lm-sensors fancontrol python3 util-linux ipmitool
 mkdir -p /etc/pve-fan-control /usr/local/lib/pve-fan-control
 install -m 0755 "$INSTALL_DIR/scripts/host-temp-source.py" /usr/local/lib/pve-fan-control/temp_source.py
 
