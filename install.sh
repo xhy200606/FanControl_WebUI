@@ -36,4 +36,11 @@ else
   rm -rf "$INSTALL_DIR"
   git clone --depth 1 "$REPO_URL" "$INSTALL_DIR"
 fi
-exec bash "$INSTALL_DIR/scripts/install-${ROLE}.sh"
+
+# curl | bash 会占用 stdin；Web 安装需要交互输入 Agent URL/Token。
+# 有控制终端时把子安装器 stdin 恢复到 /dev/tty。
+if [[ -r /dev/tty ]]; then
+  exec bash "$INSTALL_DIR/scripts/install-${ROLE}.sh" </dev/tty
+else
+  exec bash "$INSTALL_DIR/scripts/install-${ROLE}.sh"
+fi
