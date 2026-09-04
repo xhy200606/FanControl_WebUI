@@ -11,9 +11,16 @@ if [[ "$ROLE" != "agent" && "$ROLE" != "web" ]]; then
   exit 2
 fi
 
+# curl | bash / bash -s 模式下 BASH_SOURCE[0] 可能不存在。
+# 只有脚本作为真实文件执行时，才尝试从当前源码目录安装。
 SOURCE_ROOT=""
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || true)"
-if [[ -n "$HERE" && -f "$HERE/VERSION" && -d "$HERE/scripts" ]]; then SOURCE_ROOT="$HERE"; fi
+ENTRY_SOURCE="${BASH_SOURCE[0]-}"
+if [[ -n "$ENTRY_SOURCE" && -f "$ENTRY_SOURCE" ]]; then
+  HERE="$(cd "$(dirname "$ENTRY_SOURCE")" 2>/dev/null && pwd || true)"
+  if [[ -n "$HERE" && -f "$HERE/VERSION" && -d "$HERE/scripts" ]]; then
+    SOURCE_ROOT="$HERE"
+  fi
+fi
 
 apt-get update
 apt-get install -y --no-install-recommends git ca-certificates
