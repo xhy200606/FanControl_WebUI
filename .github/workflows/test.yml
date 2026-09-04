@@ -1,0 +1,19 @@
+name: Test
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install -r agent/requirements.txt -r web/requirements.txt
+      - run: python -m unittest discover -s tests -v
+      - run: python -m compileall -q agent/app web/app scripts/host-temp-source.py
+      - run: bash -n install.sh update.sh scripts/*.sh
+      - run: node --check web/app/static/app.js
