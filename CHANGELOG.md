@@ -1,5 +1,10 @@
 # 更新日志
 
+## 0.2.1 - 2026-09-04
+
+- 修复通过 `curl | bash` / `bash -s` 执行安装脚本时，`set -u` 导致 `BASH_SOURCE[0]: unbound variable` 的问题
+- 保持已存在 `/opt/pve-fan-control` 安装目录可直接继续更新，无需手动清理
+
 ## 0.2.0 - 2026-09-04
 
 - 架构拆分为 PVE Host Agent + LXC Web UI
