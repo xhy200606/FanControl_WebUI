@@ -1,0 +1,22 @@
+services:
+  pve-fan-agent:
+    build:
+      context: ../..
+      dockerfile: agent/Dockerfile
+    container_name: pve-fan-agent
+    restart: unless-stopped
+    privileged: true
+    pid: host
+    network_mode: host
+    environment:
+      PVE_FAN_AGENT_TOKEN: ${PVE_FAN_AGENT_TOKEN}
+      PVE_FAN_HOST_NSENTER: "1"
+      PVE_FAN_HOST_ETC: /host/etc
+      PVE_FAN_HOST_LIB: /host/usr/local/lib/pve-fan-control
+      PVE_FAN_HWMON_ROOT: /sys/class/hwmon
+    volumes:
+      - /sys:/sys:rw
+      - /etc:/host/etc:rw
+      - /usr/local/lib/pve-fan-control:/host/usr/local/lib/pve-fan-control:rw
+    security_opt:
+      - apparmor:unconfined
