@@ -1,0 +1,20 @@
+services:
+  pve-fan-web:
+    build:
+      context: ../..
+      dockerfile: web/Dockerfile
+    container_name: pve-fan-web
+    restart: unless-stopped
+    ports:
+      - "${PVE_FAN_WEB_PORT:-9487}:9487"
+    environment:
+      PVE_FAN_WEB_TOKEN: ${PVE_FAN_WEB_TOKEN}
+      PVE_FAN_AGENT_URL: ${PVE_FAN_AGENT_URL}
+      PVE_FAN_AGENT_TOKEN: ${PVE_FAN_AGENT_TOKEN}
+      PVE_FAN_HISTORY_INTERVAL: ${PVE_FAN_HISTORY_INTERVAL:-5}
+      PVE_FAN_HISTORY_RETENTION_HOURS: ${PVE_FAN_HISTORY_RETENTION_HOURS:-48}
+    volumes:
+      - pve-fan-history:/data
+
+volumes:
+  pve-fan-history:
