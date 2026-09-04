@@ -75,9 +75,38 @@ def ipmi_sensors() -> dict[str, Any]:
     try:
         proc = host_exec(["ipmitool", "sensor"], timeout=8)
     except (OSError, subprocess.SubprocessError) as exc:
-        return {"available": False, "error": str(exc), "sensors": []}
+        return {
+            "available": False,
+            "state": "error",
+            "message": "IPMI 检测执行失败",
+            "error": str(exc),
+            "sensors": [],
+        }
     if proc.returncode != 0:
-        return {"available": False, "error": (proc.stderr or proc.stdout).strip(), "sensors": []}
+        detail = (proc.stderr or proc.stdout).strip()
+        lowered = detail.lower()
+        absent_markers = (
+            "could not open device at /dev/ipmi0",
+            "could not open device",
+            "no such file or directory",
+            "ipmi device not found",
+            "unable to open ipmi device",
+        )
+        if any(marker in lowered for marker in absent_markers):
+            return {
+                "available": False,
+                "state": "not_detected",
+                "message": "未检测到本地 BMC/IPMI 设备（不影响 hwmon/fancontrol）",
+                "error": "",
+                "sensors": [],
+            }
+        return {
+            "available": False,
+            "state": "error",
+            "message": "IPMI 命令执行异常",
+            "error": detail,
+            "sensors": [],
+        }
     sensors: list[dict[str, Any]] = []
     for line in proc.stdout.splitlines():
         cols = [c.strip() for c in line.split("|")]
@@ -87,4 +116,10 @@ def ipmi_sensors() -> dict[str, Any]:
         if reading.lower() in {"na", "n/a", "disabled", ""}:
             continue
         sensors.append({"name": name, "reading": reading, "units": units, "status": status})
-    return {"available": True, "error": "", "sensors": sensors}
+    return {
+        "available": True,
+        "state": "available",
+        "message": f"已检测到 {len(sensors)} 个 IPMI 传感器项目",
+        "error": "",
+        "sensors": sensors,
+    }

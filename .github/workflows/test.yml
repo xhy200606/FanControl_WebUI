@@ -1,7 +1,9 @@
 name: Test
 on:
-  push:
   pull_request:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

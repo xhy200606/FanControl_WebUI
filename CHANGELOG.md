@@ -1,9 +1,17 @@
 # 更新日志
 
+## 0.2.2 - 2026-09-04
+
+- 修复 Agent 在部分 Docker/PVE 环境中无法发现宿主机 hwmon 的问题：优先通过 `nsenter` 扫描宿主机 `/sys/class/hwmon`
+- 增加 hwmon/PWM 诊断信息，区分“无 hwmon”“无 PWM”“PWM 不可写”
+- IPMI/BMC 改为可选能力；没有 `/dev/ipmi0` 时不再返回原始设备错误
+- Docker GitHub Actions 改为仅在 `v*` 标签或手动触发时构建镜像
+- Test workflow 改为仅在 PR、`v*` 标签或手动触发时运行，普通 main 文件更新不再触发编译
+
 ## 0.2.1 - 2026-09-04
 
-- 修复通过 `curl | bash` / `bash -s` 执行安装脚本时，`set -u` 导致 `BASH_SOURCE[0]: unbound variable` 的问题
-- 保持已存在 `/opt/pve-fan-control` 安装目录可直接继续更新，无需手动清理
+- 修复 `curl | bash` 场景下 `BASH_SOURCE[0]` 未定义导致安装失败
+- 修复管道安装时 Web 交互输入无法读取终端的问题
 
 ## 0.2.0 - 2026-09-04
 

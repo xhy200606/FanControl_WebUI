@@ -1,8 +1,8 @@
 name: Docker
 on:
   push:
-    branches: [main]
     tags: ['v*']
+  workflow_dispatch:
 permissions:
   contents: read
   packages: write
@@ -30,7 +30,7 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository_owner }}/fancontrol-webui-${{ matrix.name }}
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest
             type=ref,event=tag
             type=sha
       - uses: docker/build-push-action@v6
