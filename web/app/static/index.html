@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>PVE Fan Control</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+<div class="app-shell">
+  <aside class="sidebar material-heavy">
+    <div class="brand"><div class="brand-mark">F</div><div><strong>PVE Fan Control</strong><small id="versionLabel">v0.2.0</small></div></div>
+    <nav>
+      <button class="nav-item active" data-view="dashboard"><span>◫</span><b>概览</b></button>
+      <button class="nav-item" data-view="native"><span>⌁</span><b>原生控制</b></button>
+      <button class="nav-item" data-view="enhanced"><span>⌇</span><b>增强曲线</b></button>
+      <button class="nav-item" data-view="sensors"><span>◉</span><b>传感器</b></button>
+      <button class="nav-item" data-view="system"><span>⚙</span><b>系统</b></button>
+    </nav>
+    <div class="sidebar-foot"><span class="dot" id="agentDot"></span><div><b id="agentLabel">Agent</b><small id="lastUpdated">等待连接</small></div></div>
+  </aside>
+
+  <main class="content">
+    <header class="topbar material-light">
+      <div><p class="eyebrow">PROXMOX VE · FANCONTROL</p><h1 id="pageTitle">系统概览</h1></div>
+      <div class="header-actions"><span class="status-pill" id="statusPill">连接中</span><button class="icon-button" id="refreshBtn" title="刷新">↻</button></div>
+    </header>
+
+    <section class="view active" id="view-dashboard">
+      <div class="hero-grid">
+        <article class="hero-card material-card">
+          <div><p class="eyebrow">当前热状态</p><h2 id="heroTemp">--°C</h2><p id="heroSensor">等待传感器</p></div>
+          <div class="temp-ring" id="tempRing"><span id="tempRingValue">--</span><small>°C</small></div>
+        </article>
+        <article class="status-card material-card"><div class="card-heading"><div><p class="eyebrow">原生控制</p><h3>fancontrol</h3></div><span class="state-badge" id="nativeBadge">--</span></div><p class="muted" id="nativeStatusText">宿主机原生温控状态。</p><div class="button-row"><button class="secondary" data-service="restart">重启</button><button class="danger-quiet" data-service="stop">停止</button></div></article>
+        <article class="status-card material-card"><div class="card-heading"><div><p class="eyebrow">增强控制</p><h3>增强控制器</h3></div><span class="state-badge" id="enhancedBadge">--</span></div><p class="muted" id="enhancedStatusText">多节点曲线、滞回和故障保护。</p><div class="button-row"><button class="primary" id="quickEnhanced">切换增强模式</button></div></article>
+      </div>
+
+      <div class="section-head"><div><p class="eyebrow">实时遥测</p><h2>实时状态</h2></div><span class="soft-chip" id="sensorSummary">--</span></div>
+      <div class="metric-grid" id="metricGrid"></div>
+
+      <article class="material-card history-card">
+        <div class="card-heading"><div><p class="eyebrow">历史记录</p><h3>温度历史</h3></div><div class="segmented" id="historyRange"><button data-minutes="30">30m</button><button data-minutes="60" class="active">1h</button><button data-minutes="360">6h</button><button data-minutes="1440">24h</button></div></div>
+        <div class="history-stage"><svg id="historyChart" viewBox="0 0 900 260" preserveAspectRatio="none"><g id="historyGrid"></g><g id="historyLines"></g></svg><div class="history-empty" id="historyEmpty">正在收集历史数据…</div></div>
+        <div class="legend" id="historyLegend"></div>
+      </article>
+    </section>
+
+    <section class="view" id="view-native">
+      <div class="section-head"><div><p class="eyebrow">LM-SENSORS FANCONTROL</p><h2>原生 fancontrol</h2></div><select id="nativeChannelSelect"></select></div>
+      <div class="two-col">
+        <article class="material-card curve-card">
+          <div class="card-heading"><div><p class="eyebrow">线性策略</p><h3>原生线性曲线</h3></div><span class="soft-chip">安全兼容模式</span></div>
+          <div class="curve-stage"><svg viewBox="0 0 640 300"><defs><linearGradient id="curveFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".20"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs><g class="grid-lines" id="nativeGrid"></g><path class="curve-area" id="nativeCurveArea"></path><path class="curve-line" id="nativeCurveLine"></path><circle class="curve-point" id="nativeMinPoint" r="7"></circle><circle class="curve-point" id="nativeMaxPoint" r="7"></circle></svg><div class="curve-caption"><span>温度低</span><span>温度高</span></div></div>
+          <div class="curve-summary"><div><span>最低温度</span><strong id="summaryMinTemp">--</strong></div><div><span>最高温度</span><strong id="summaryMaxTemp">--</strong></div><div><span>最低 PWM</span><strong id="summaryMinPwm">--</strong></div><div><span>最高 PWM</span><strong id="summaryMaxPwm">--</strong></div></div>
+        </article>
+        <article class="material-card editor-card">
+          <div class="card-heading"><div><p class="eyebrow">参数设置</p><h3>参数</h3></div></div>
+          <div class="form-grid">
+            <label><span>最低温度</span><output id="mintempOut">40</output><input id="mintemp" type="range" min="20" max="70" value="40"></label>
+            <label><span>最高温度</span><output id="maxtempOut">75</output><input id="maxtemp" type="range" min="45" max="100" value="75"></label>
+            <label><span>最低 PWM</span><output id="minpwmOut">35</output><input id="minpwm" type="range" min="20" max="80" value="35"></label>
+            <label><span>最高 PWM</span><output id="maxpwmOut">100</output><input id="maxpwm" type="range" min="50" max="100" value="100"></label>
+          </div>
+          <div class="field-row"><label class="compact">MINSTART<input id="minstart" type="number" min="0" max="255"></label><label class="compact">MINSTOP<input id="minstop" type="number" min="0" max="255"></label></div>
+          <div class="field-row"><label class="compact">INTERVAL (s)<input id="interval" type="number" min="1" max="60"></label><label class="compact">AVERAGE<input id="average" type="number" min="1" max="60"></label></div>
+          <button class="primary full" id="applyNative">保存并重启 fancontrol</button>
+        </article>
+      </div>
+
+      <article class="material-card source-card">
+        <div class="card-heading"><div><p class="eyebrow">温度控制源</p><h3>控制源 · 最大值策略</h3></div><span class="soft-chip" id="nativeSourceState">未配置</span></div>
+        <p class="muted">可同时选择 CPU、Tesla P100、NVMe 等传感器。Agent 会生成 fancontrol 的 <code>!command</code> 温度源，并返回所选传感器中的最高温度；如果所有源失效，将返回故障保护温度使风扇进入最高转速。</p>
+        <div class="source-grid" id="nativeSourceGrid"></div>
+        <div class="inline-fields"><label class="compact">故障保护温度 °C<input id="nativeFailsafe" type="number" min="60" max="120" value="100"></label><button class="primary" id="applyNativeSources">应用控制源</button></div>
+      </article>
+
+      <article class="material-card manual-card"><div class="card-heading"><div><p class="eyebrow">手动接管</p><h3>手动 PWM</h3></div><span class="warning-chip">会停止自动控制</span></div><div class="manual-control"><select id="manualPwmSelect"></select><input id="manualPwm" type="range" min="20" max="100" value="50"><strong id="manualPwmOut">50%</strong><button class="danger" id="applyManual">应用手动转速</button></div></article>
+    </section>
+
+    <section class="view" id="view-enhanced">
+      <div class="section-head"><div><p class="eyebrow">多节点控制器</p><h2>增强曲线</h2></div><label class="switch-row"><span>启用增强模式</span><input id="enhancedEnabled" type="checkbox"><i></i></label></div>
+      <div class="notice warning"><b>增强模式会暂停宿主机 fancontrol。</b><span>Agent 直接接管 PWM，以实现原生 fancontrol 不支持的多节点曲线和滞回；关闭后会先将受控风扇置于 100%，再恢复 fancontrol。</span></div>
+      <div class="two-col enhanced-layout">
+        <article class="material-card curve-card"><div class="card-heading"><div><p class="eyebrow">温控曲线</p><h3>多节点温控曲线</h3></div><select id="enhancedChannelSelect"></select></div><div class="curve-stage"><svg viewBox="0 0 640 300"><g class="grid-lines" id="enhancedGrid"></g><path class="curve-area" id="enhancedCurveArea"></path><path class="curve-line" id="enhancedCurveLine"></path><g id="enhancedPoints"></g></svg><div class="curve-caption"><span>0°C</span><span>120°C</span></div></div><div class="runtime-strip" id="enhancedRuntime">等待增强控制器数据</div></article>
+        <article class="material-card editor-card"><div class="card-heading"><div><p class="eyebrow">安全策略</p><h3>行为与保护</h3></div></div><div class="field-row"><label class="compact">控制周期 (s)<input id="enhancedInterval" type="number" min="0.5" max="30" step="0.5" value="2"></label><label class="compact">滞回温差 °C<input id="enhancedHysteresis" type="number" min="0" max="15" step="0.5" value="3"></label></div><div class="field-row"><label class="compact">应急温度 °C<input id="enhancedEmergency" type="number" min="40" max="120" value="82"></label><label class="compact">关闭后恢复<input value="fancontrol" disabled></label></div><h4>控制源</h4><div class="source-grid compact-sources" id="enhancedSourceGrid"></div><button class="primary full" id="saveEnhanced">保存增强配置</button></article>
+      </div>
+      <article class="material-card points-card"><div class="card-heading"><div><p class="eyebrow">控制节点</p><h3>曲线节点</h3></div><button class="secondary" id="addCurvePoint">＋ 添加节点</button></div><div id="curvePointRows" class="point-rows"></div></article>
+    </section>
+
+    <section class="view" id="view-sensors">
+      <div class="section-head"><div><p class="eyebrow">硬件清单</p><h2>传感器</h2></div><span class="soft-chip" id="sensorCount">0 个</span></div>
+      <article class="material-card sensor-table"><div class="sensor-row sensor-head"><span>芯片</span><span>传感器</span><span>类型</span><span>当前值</span></div><div id="sensorRows"></div></article>
+    </section>
+
+    <section class="view" id="view-system">
+      <div class="settings-grid">
+        <article class="material-card"><p class="eyebrow">AGENT</p><h3>部署状态</h3><p class="muted" id="deployStatus">Web UI → PVE Host Agent</p><button class="secondary" id="changeToken">重新输入 Web 访问令牌</button></article>
+        <article class="material-card"><p class="eyebrow">PROMETHEUS</p><h3>监控接口</h3><p class="muted">Agent 提供 <code>/metrics</code>，使用 Agent Bearer Token 鉴权。可采集温度、RPM、PWM 与控制器状态。</p></article>
+        <article class="material-card"><p class="eyebrow">IPMI / BMC</p><h3>IPMI 传感器</h3><p class="muted" id="ipmiStatus">检测中…</p><button class="secondary" id="loadIpmi">重新检测</button></article>
+      </div>
+      <article class="material-card webhook-card"><div class="card-heading"><div><p class="eyebrow">告警</p><h3>Webhook 高温告警</h3></div><label class="switch-row small"><input id="webhookEnabled" type="checkbox"><i></i></label></div><div class="webhook-fields"><label class="compact">Webhook URL<input id="webhookUrl" type="url" placeholder="https://example.com/webhook"></label><label class="compact">告警温度 °C<input id="webhookTemp" type="number" min="40" max="120" value="82"></label><label class="compact">冷却时间 (s)<input id="webhookCooldown" type="number" min="30" max="86400" value="300"></label><button class="primary" id="saveWebhook">保存</button></div></article>
+      <article class="material-card ipmi-card"><div class="card-heading"><div><p class="eyebrow">BMC 遥测</p><h3>IPMI 读取结果</h3></div></div><div id="ipmiRows" class="ipmi-grid"></div><p class="muted">V0.2 仅做通用 IPMI 传感器读取。不同厂商的风扇写控制使用不同 raw 命令，未在未知硬件上自动执行高风险 BMC 写操作。</p></article>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="tokenModal"><div class="modal material-modal"><div class="modal-icon">⌁</div><h2>连接 PVE Fan Control</h2><p>输入 Web UI 安装时生成的访问令牌。令牌只保存在当前浏览器的本地存储中。</p><input id="tokenInput" type="password" autocomplete="current-password" placeholder="Web UI Token"><button class="primary full" id="saveToken">连接</button></div></div>
+<div class="toast" id="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
